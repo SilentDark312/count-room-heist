@@ -134,6 +134,37 @@ async function main() {
   await page.waitForTimeout(300);
   await page.screenshot({ path: path.join(outDir, '06b-heist-casino-banner.png') });
 
+  // 7. The other three casinos' palettes + the Fence -- seed progress so
+  // every stop and the upgrade shop are visible without having to actually
+  // win three casinos inside this script.
+  await page.evaluate(() => {
+    localStorage.setItem('countroom_save_v1', JSON.stringify({
+      bankroll: 1000, mode: 'free', savedFreeBankroll: 1000, numDecks: 6, stats: {},
+      adv: {
+        cleared: ['rusty-nickel', 'silver-spur', 'riviera-room'],
+        take: 500,
+        upgrades: { steadyHands: false, bankroll: false, friend: false }
+      }
+    }));
+  });
+  await page.reload();
+  await page.click('[data-tab="adventure"]');
+  await page.waitForTimeout(200);
+  await page.screenshot({ path: path.join(outDir, '07-heist-map-with-fence.png') });
+
+  for (const [stopIdx, label] of [[1, 'silver-spur'], [2, 'riviera-room'], [3, 'the-vault']]) {
+    await page.click(`#advStopsList button[data-stop="${stopIdx}"]`);
+    await page.waitForTimeout(200);
+    for (let i = 0; i < 4; i++) {
+      if (await page.locator('#advStoryView').isVisible()) await page.click('#btnAdvContinue');
+      else break;
+    }
+    await page.waitForTimeout(300);
+    await page.screenshot({ path: path.join(outDir, `07-heist-palette-${label}.png`) });
+    await page.click('[data-tab="adventure"]');
+    await page.waitForTimeout(200);
+  }
+
   await browser.close();
   server.close();
   console.log('Screenshots written to verify/');

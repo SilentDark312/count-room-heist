@@ -605,6 +605,7 @@
         <span class="mono" id="advBannerHeat">0 / 20</span>
       </div>
       <div class="heat-track"><div class="heat-fill" id="advBannerHeatFill"></div></div>
+      <button class="btn small" id="btnCoolIt" hidden style="margin-top:.6rem;">Cool It (reset heat)</button>
     </div>
 
     <div class="hint-bar">
@@ -855,6 +856,7 @@
     <div id="advMapView">
       <p style="font-size:.85rem; color:var(--cream-dim);">Work your way up the circuit, one room at a time. Every stop plays by its own house rules — the same rules the Play tab already uses, just wired into the story.</p>
       <div id="advStopsList"></div>
+      <div id="advFence"></div>
     </div>
 
     <div id="advStoryView" hidden>
@@ -1083,7 +1085,7 @@
         savedFreeBankroll: game.savedFreeBankroll,
         numDecks: game.numDecks,
         stats: game.stats,
-        adv: { cleared: game.adv.cleared }
+        adv: { cleared: game.adv.cleared, take: game.adv.take, upgrades: game.adv.upgrades }
       }));
     }catch(e){}
   }
@@ -1107,8 +1109,10 @@
      stops are cleared) is persisted; a live session doesn't survive
      a reload, same as the rest of Play doesn't try to either.
   ============================================================ */
-  const ADV_HEAT_LIMIT = 40;
   const ADV_HEAT_PER_HAND = 1;
+  // Felt/brass token overrides applied while a stop is active (see
+  // applyPalette/resetPalette) -- everything else in the design system is
+  // untouched, so a new room is "just" a new set of five color values.
   const ADVENTURE_STOPS = [
     {
       id: 'rusty-nickel',
@@ -1117,6 +1121,8 @@
       numDecks: 2,
       stake: 200,
       goal: 400,
+      heatLimit: 40,
+      palette: { felt1:'#123d2e', felt2:'#0d2f24', feltDeep:'#081f19', brass:'#c9a227', brassBright:'#e7c65a' },
       introStory: [
         { who:'Frankie', text:"So you want in on this? Fine. Rule one: don't look smart. Rule two: don't look lucky. Rule three... just don't get us barred on night one, alright?" },
         { who:'Frankie', text:"The Rusty Nickel runs a two-deck table, nothing fancy. Perfect place to warm up before we go after the real money." },
@@ -1130,14 +1136,104 @@
         { who:'Frankie', text:"Ouch. Well, everybody's got a rough first night. Table's still there tomorrow if you want another go." }
       ]
     },
-    { id:'coming-soon', locked:true, name:'??? ', blurb:'Frankie says the next room isn’t ready to talk about yet.' }
+    {
+      id: 'silver-spur',
+      name: 'The Silver Spur Saloon',
+      blurb: "Sawdust on the floor and a pit boss who's been doing this since before you were born. Four decks, and he's watching.",
+      numDecks: 4,
+      stake: 300,
+      goal: 550,
+      heatLimit: 45,
+      palette: { felt1:'#3d1f16', felt2:'#28140d', feltDeep:'#160a06', brass:'#9a9a9a', brassBright:'#d8d8d0' },
+      introStory: [
+        { who:'Frankie', text:"Nice work at the Nickel. This one's a different animal — the Spur runs four decks, and the floor boss has a memory like a steel trap." },
+        { who:'Frankie', text:"Bigger money means bigger swings. $550 gets us square here. Keep it cool — this pit boss doesn't give second chances." }
+      ],
+      winStory: [
+        { who:'Frankie', text:"You kept your head down and your count straight. That's exactly the kind of quiet I like to see." },
+        { who:'Frankie', text:"Word's gonna get around that a new face is running hot. One more room like that and we're not small-time anymore." }
+      ],
+      loseStory: [
+        { who:'Frankie', text:"The Spur chews people up. Don't sweat it — even the pros have off nights. Shake it off, we'll try again." }
+      ]
+    },
+    {
+      id: 'riviera-room',
+      name: 'The Riviera Room',
+      blurb: "Champagne, chandeliers, and a single deck reshuffled by hand for the high rollers. Old-money odds for old-money money.",
+      numDecks: 1,
+      stake: 600,
+      goal: 1150,
+      heatLimit: 45,
+      palette: { felt1:'#122a4d', felt2:'#0c1e38', feltDeep:'#060f1d', brass:'#c9a267', brassBright:'#e8cf9a' },
+      introStory: [
+        { who:'Frankie', text:"The Riviera only spreads one deck — best odds in the circuit, if you can stomach a room this fancy watching your every move." },
+        { who:'Frankie', text:"This is the room that makes or breaks a crew. $1,150 and we're not small-time to anyone anymore. Play it clean." }
+      ],
+      winStory: [
+        { who:'Frankie', text:"...I don't think I've ever seen you smile like that. You earned it — that room doesn't let just anyone walk out ahead." },
+        { who:'Frankie', text:"One left. The big one. You ready?" }
+      ],
+      loseStory: [
+        { who:'Frankie', text:"The Riviera's a different kind of pressure. Get some air. It'll be there when you're ready to go back in." }
+      ]
+    },
+    {
+      id: 'the-vault',
+      name: 'The Vault',
+      blurb: "Eight decks, a shoe the size of a shoebox, and the kind of money that ends careers — yours or theirs. The last room on the circuit.",
+      numDecks: 8,
+      stake: 1000,
+      goal: 1900,
+      heatLimit: 50,
+      palette: { felt1:'#1c1c22', felt2:'#131318', feltDeep:'#0a0a0d', brass:'#9fb0b8', brassBright:'#dbe7ea' },
+      introStory: [
+        { who:'Frankie', text:"This is it. The Vault runs eight decks — hardest room to read on the whole circuit, and the only one that can actually set us up for good." },
+        { who:'Frankie', text:"$1,900 and we're done, kid. Retired. Whatever you've learned every night up to now — tonight's the night it has to count." }
+      ],
+      winStory: [
+        { who:'Frankie', text:"...We did it. We actually did it. I've been running crews for fifteen years and I've never seen a first run go this clean." },
+        { who:'Frankie', text:"That's the whole circuit, start to finish. You walked in green and you're walking out the best count I've ever worked with." },
+        { who:'Frankie', text:"Go spend it. You earned every dollar of it — the hard way, one correct decision at a time. And hey... if you ever want to run it all again, the tables aren't going anywhere." }
+      ],
+      loseStory: [
+        { who:'Frankie', text:"The Vault doesn't go easy on anybody's first try. Catch your breath. When you're ready, it's still sitting there waiting." }
+      ]
+    }
   ];
+
+  const ADV_UPGRADES = [
+    { id:'steadyHands', name:'Steadier Hands', desc:"+10 heat capacity at every job, permanently.", cost:150 },
+    { id:'bankroll', name:'Bigger Bankroll', desc:"+$100 starting stake at every job, permanently.", cost:150 },
+    { id:'friend', name:'A Friend at the Door', desc:"Once per job, reset your heat to zero on demand.", cost:250 }
+  ];
+  function advHeatLimitFor(stop){ return stop.heatLimit + (game.adv.upgrades.steadyHands ? 10 : 0); }
+  function advStakeFor(stop){ return stop.stake + (game.adv.upgrades.bankroll ? 100 : 0); }
+
+  // Applies/removes one casino's felt+brass token overrides. Everything else
+  // in the design system reads these same five custom properties, so a new
+  // "look" per stop is just five color values, not new CSS.
+  const ADV_PALETTE_VARS = { felt1:'--felt-1', felt2:'--felt-2', feltDeep:'--felt-deep', brass:'--brass', brassBright:'--brass-bright' };
+  function applyPalette(stop){
+    if(!stop.palette) return;
+    Object.entries(ADV_PALETTE_VARS).forEach(([key, cssVar])=>{
+      if(stop.palette[key]) document.documentElement.style.setProperty(cssVar, stop.palette[key]);
+    });
+  }
+  function resetPalette(){
+    Object.values(ADV_PALETTE_VARS).forEach(cssVar=> document.documentElement.style.removeProperty(cssVar));
+  }
 
   const game = {
     bankroll: saved && typeof saved.bankroll==='number' ? saved.bankroll : 1000,
     mode: saved && ['challenge','drill'].includes(saved.mode) ? saved.mode : 'free',
     savedFreeBankroll: saved && typeof saved.savedFreeBankroll==='number' ? saved.savedFreeBankroll : 1000,
-    adv: { cleared: saved && saved.adv && Array.isArray(saved.adv.cleared) ? saved.adv.cleared : [], heat:0, stop:null },
+    adv: {
+      cleared: saved && saved.adv && Array.isArray(saved.adv.cleared) ? saved.adv.cleared : [],
+      take: saved && saved.adv && typeof saved.adv.take==='number' ? saved.adv.take : 0,
+      upgrades: saved && saved.adv && saved.adv.upgrades ? saved.adv.upgrades : { steadyHands:false, bankroll:false, friend:false },
+      heat:0, stop:null, coolItUsedThisVisit:false
+    },
     drillCountChecked: false,
     numDecks: saved && VALID_DECK_COUNTS.includes(saved.numDecks) ? saved.numDecks : DEFAULT_DECKS,
     shoe: [],
@@ -1446,8 +1542,10 @@
       const stop = game.adv.stop;
       $('advBannerCasino').textContent = stop.name;
       $('advBannerGoal').textContent = `Goal $${stop.goal.toLocaleString('en-US')}`;
-      $('advBannerHeat').textContent = `${game.adv.heat} / ${ADV_HEAT_LIMIT}`;
-      $('advBannerHeatFill').style.width = Math.min(100, (game.adv.heat/ADV_HEAT_LIMIT)*100) + '%';
+      const heatLimit = advHeatLimitFor(stop);
+      $('advBannerHeat').textContent = `${game.adv.heat} / ${heatLimit}`;
+      $('advBannerHeatFill').style.width = Math.min(100, (game.adv.heat/heatLimit)*100) + '%';
+      $('btnCoolIt').hidden = !(game.adv.upgrades.friend && !game.adv.coolItUsedThisVisit);
     }
   }
 
@@ -1728,11 +1826,12 @@
     }
 
     if(game.mode==='adventure' && game.adv.stop){
-      game.adv.heat = Math.min(ADV_HEAT_LIMIT, game.adv.heat + ADV_HEAT_PER_HAND);
       const stop = game.adv.stop;
+      const heatLimit = advHeatLimitFor(stop);
+      game.adv.heat = Math.min(heatLimit, game.adv.heat + ADV_HEAT_PER_HAND);
       if(game.bankroll >= stop.goal) game.adv.pendingOutcome = 'win';
       else if(game.bankroll < 5) game.adv.pendingOutcome = 'lose';
-      else if(game.adv.heat >= ADV_HEAT_LIMIT) game.adv.pendingOutcome = 'heat';
+      else if(game.adv.heat >= heatLimit) game.adv.pendingOutcome = 'heat';
       $('btnNextRound').textContent = game.adv.pendingOutcome ? 'Continue' : 'Next Round';
     }
 
@@ -2152,20 +2251,32 @@
   /* ============================================================
      HEIST MODE (adventure layer)
   ============================================================ */
+  function isStopUnlocked(idx){
+    return idx===0 || game.adv.cleared.includes(ADVENTURE_STOPS[idx-1].id);
+  }
+
   function renderAdventureMap(){
     const list = $('advStopsList');
     let html = '';
+
+    const allCleared = ADVENTURE_STOPS.every(s=>game.adv.cleared.includes(s.id));
+    if(allCleared){
+      html += `<div class="callout"><div class="head">Circuit complete</div>You ran the whole board. Nothing stopping you from doing it again for the practice — the tables reset every time you walk back in.</div>`;
+    }
+
     ADVENTURE_STOPS.forEach((stop, idx)=>{
-      if(stop.locked){
-        html += `<div class="table-zone" style="opacity:.55;">
-          <div class="zone-label"><span>${stop.name}</span><span>Locked</span></div>
-          <p style="margin:.4rem 0 0; font-size:.85rem; color:var(--cream-dim);">${stop.blurb}</p>
+      const unlocked = isStopUnlocked(idx);
+      if(!unlocked){
+        html += `<div class="table-zone" style="opacity:.5;">
+          <div class="zone-label"><span>???</span><span>Locked</span></div>
+          <p style="margin:.4rem 0 0; font-size:.85rem; color:var(--cream-dim);">Clear ${ADVENTURE_STOPS[idx-1].name} first — Frankie won't talk about this one yet.</p>
         </div>`;
         return;
       }
       const cleared = game.adv.cleared.includes(stop.id);
+      const stake = advStakeFor(stop);
       html += `<div class="table-zone">
-        <div class="zone-label"><span>${stop.name}</span><span class="mono">${cleared ? '✓ Cleared' : '$'+stop.stake+' stake'}</span></div>
+        <div class="zone-label"><span>${stop.name}</span><span class="mono">${cleared ? '✓ Cleared' : '$'+stake.toLocaleString('en-US')+' stake'}</span></div>
         <p style="margin:.4rem 0 .7rem; font-size:.85rem; color:var(--cream-dim);">${stop.blurb}</p>
         <div class="action-bar">
           <button class="btn primary wide" data-stop="${idx}">${cleared ? 'Play Again' : 'Enter'}</button>
@@ -2176,7 +2287,49 @@
     list.querySelectorAll('button[data-stop]').forEach(btn=>{
       btn.addEventListener('click', ()=> enterCasino(ADVENTURE_STOPS[parseInt(btn.dataset.stop,10)]));
     });
+
+    renderFence();
   }
+
+  function renderFence(){
+    const el = $('advFence');
+    if(!el) return;
+    el.innerHTML = `
+      <h3 style="font-size:.95rem; margin-top:1.4rem;">The Fence</h3>
+      <p class="table-caption">Spend the take between jobs. Upgrades are permanent once bought.</p>
+      <p style="text-align:center; font-family:'IBM Plex Mono'; font-size:1.3rem; font-weight:700; color:var(--brass-bright); margin:.3rem 0 .8rem;">$${game.adv.take.toLocaleString('en-US')}</p>
+    ` + ADV_UPGRADES.map(u=>{
+      const owned = game.adv.upgrades[u.id];
+      const afford = game.adv.take >= u.cost;
+      return `<div class="table-zone">
+        <div class="zone-label"><span>${u.name}</span><span class="mono">${owned ? 'Owned' : '$'+u.cost}</span></div>
+        <p style="margin:.4rem 0 .7rem; font-size:.85rem; color:var(--cream-dim);">${u.desc}</p>
+        <div class="action-bar">
+          <button class="btn ${owned?'':'primary'} wide" data-upgrade="${u.id}" ${owned || !afford ? 'disabled' : ''}>${owned ? 'Owned' : 'Buy'}</button>
+        </div>
+      </div>`;
+    }).join('');
+    el.querySelectorAll('button[data-upgrade]').forEach(btn=>{
+      btn.addEventListener('click', ()=> buyUpgrade(btn.dataset.upgrade));
+    });
+  }
+
+  function buyUpgrade(id){
+    const upgrade = ADV_UPGRADES.find(u=>u.id===id);
+    if(!upgrade || game.adv.upgrades[id] || game.adv.take < upgrade.cost) return;
+    game.adv.take -= upgrade.cost;
+    game.adv.upgrades[id] = true;
+    saveState();
+    renderFence();
+  }
+
+  $('btnCoolIt').addEventListener('click', ()=>{
+    if(!(game.adv.upgrades.friend && !game.adv.coolItUsedThisVisit)) return;
+    game.adv.heat = 0;
+    game.adv.coolItUsedThisVisit = true;
+    saveState();
+    renderAll();
+  });
 
   // Sequences an array of {who, text} beats one at a time behind a single
   // "Continue" button, swapping between the map and story views.
@@ -2201,15 +2354,17 @@
 
   function enterCasino(stop){
     if(stop.locked) return;
+    applyPalette(stop);
     showStoryBeats(stop.introStory, ()=>{
       if(game.mode==='free') game.savedFreeBankroll = game.bankroll;
       game.mode = 'adventure';
       game.numDecks = stop.numDecks;
       game.shoe = [];
       game.runningCount = 0;
-      game.bankroll = stop.stake;
+      game.bankroll = advStakeFor(stop);
       game.adv.stop = stop;
       game.adv.heat = 0;
+      game.adv.coolItUsedThisVisit = false;
       game.adv.pendingOutcome = null;
       game.phase = 'betting';
       game.dealer = {cards:[], holeRevealed:false};
@@ -2228,8 +2383,11 @@
 
   function finishAdventureVisit(outcome){
     const stop = game.adv.stop;
-    if(outcome==='win' && stop && !game.adv.cleared.includes(stop.id)){
-      game.adv.cleared.push(stop.id);
+    let takeEarned = 0;
+    if(outcome==='win' && stop){
+      takeEarned = Math.max(0, game.bankroll - advStakeFor(stop));
+      game.adv.take += takeEarned;
+      if(!game.adv.cleared.includes(stop.id)) game.adv.cleared.push(stop.id);
     }
     // The stake was its own pool for the visit -- win or lose, the ordinary
     // bankroll picks back up exactly where it was left off.
@@ -2243,12 +2401,17 @@
     resultAreaEl.innerHTML = '';
     betAmtEl.textContent = '$0';
     $('btnNextRound').textContent = 'Next Round';
+    resetPalette();
     updateDealButton();
     saveState();
     renderAll();
 
     document.querySelector('[data-tab="adventure"]').click();
-    const beats = outcome==='win' ? stop.winStory
+    const isLastStop = stop && ADVENTURE_STOPS.indexOf(stop) === ADVENTURE_STOPS.length-1;
+    const takeLine = takeEarned<=0 ? [] : [{ who:'Frankie', text: isLastStop
+      ? `That's $${takeEarned.toLocaleString('en-US')} banked on top of everything else. Not that you'll need it — you're done here.`
+      : `That's $${takeEarned.toLocaleString('en-US')} for the take. Spend it wisely — it'll buy you an edge at the next room.` }];
+    const beats = outcome==='win' ? stop.winStory.concat(takeLine)
       : outcome==='heat' ? [{ who:'Frankie', text:"Whoa, easy — the pit boss is watching you like a hawk. Let's cool off before they walk you out for good." }]
       : stop.loseStory;
     showStoryBeats(beats, ()=> renderAdventureMap());
