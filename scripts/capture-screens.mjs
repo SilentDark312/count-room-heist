@@ -119,6 +119,21 @@ async function main() {
   await page.waitForTimeout(200);
   await page.screenshot({ path: path.join(outDir, '05b-play-drill-after-check.png') });
 
+  // 6. Heist tab: the map, an intro story beat, and mid-casino play with the
+  // adventure banner showing
+  await page.click('#modeFree');
+  await page.click('[data-tab="adventure"]');
+  await page.waitForTimeout(200);
+  await page.screenshot({ path: path.join(outDir, '06-heist-map.png') });
+  await page.click('#advStopsList button[data-stop="0"]');
+  await page.waitForTimeout(200);
+  await page.screenshot({ path: path.join(outDir, '06a-heist-story.png') });
+  await page.click('#btnAdvContinue');
+  await page.click('#btnAdvContinue');
+  await page.click('#btnAdvContinue');
+  await page.waitForTimeout(300);
+  await page.screenshot({ path: path.join(outDir, '06b-heist-casino-banner.png') });
+
   await browser.close();
   server.close();
   console.log('Screenshots written to verify/');
