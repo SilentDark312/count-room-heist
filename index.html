@@ -1122,7 +1122,7 @@
       stake: 200,
       goal: 400,
       heatLimit: 40,
-      palette: { felt1:'#123d2e', felt2:'#0d2f24', feltDeep:'#081f19', brass:'#c9a227', brassBright:'#e7c65a' },
+      palette: { felt1:'#123d2e', felt2:'#0d2f24', feltDeep:'#081f19', brass:'#c9a227', brassBright:'#e7c65a', panel:'#164635', panel2:'#1b5241' },
       introStory: [
         { who:'Frankie', text:"So you want in on this? Fine. Rule one: don't look smart. Rule two: don't look lucky. Rule three... just don't get us barred on night one, alright?" },
         { who:'Frankie', text:"The Rusty Nickel runs a two-deck table, nothing fancy. Perfect place to warm up before we go after the real money." },
@@ -1144,7 +1144,7 @@
       stake: 300,
       goal: 550,
       heatLimit: 45,
-      palette: { felt1:'#3d1f16', felt2:'#28140d', feltDeep:'#160a06', brass:'#9a9a9a', brassBright:'#d8d8d0' },
+      palette: { felt1:'#3d1f16', felt2:'#28140d', feltDeep:'#160a06', brass:'#9a9a9a', brassBright:'#d8d8d0', panel:'#5a2f1f', panel2:'#6b3826' },
       introStory: [
         { who:'Frankie', text:"Nice work at the Nickel. This one's a different animal — the Spur runs four decks, and the floor boss has a memory like a steel trap." },
         { who:'Frankie', text:"Bigger money means bigger swings. $550 gets us square here. Keep it cool — this pit boss doesn't give second chances." }
@@ -1165,7 +1165,7 @@
       stake: 600,
       goal: 1150,
       heatLimit: 45,
-      palette: { felt1:'#122a4d', felt2:'#0c1e38', feltDeep:'#060f1d', brass:'#c9a267', brassBright:'#e8cf9a' },
+      palette: { felt1:'#122a4d', felt2:'#0c1e38', feltDeep:'#060f1d', brass:'#c9a267', brassBright:'#e8cf9a', panel:'#1c3f6e', panel2:'#234b82' },
       introStory: [
         { who:'Frankie', text:"The Riviera only spreads one deck — best odds in the circuit, if you can stomach a room this fancy watching your every move." },
         { who:'Frankie', text:"This is the room that makes or breaks a crew. $1,150 and we're not small-time to anyone anymore. Play it clean." }
@@ -1186,7 +1186,7 @@
       stake: 1000,
       goal: 1900,
       heatLimit: 50,
-      palette: { felt1:'#1c1c22', felt2:'#131318', feltDeep:'#0a0a0d', brass:'#9fb0b8', brassBright:'#dbe7ea' },
+      palette: { felt1:'#1c1c22', felt2:'#131318', feltDeep:'#0a0a0d', brass:'#9fb0b8', brassBright:'#dbe7ea', panel:'#2a2a32', panel2:'#34343e' },
       introStory: [
         { who:'Frankie', text:"This is it. The Vault runs eight decks — hardest room to read on the whole circuit, and the only one that can actually set us up for good." },
         { who:'Frankie', text:"$1,900 and we're done, kid. Retired. Whatever you've learned every night up to now — tonight's the night it has to count." }
@@ -1213,7 +1213,11 @@
   // Applies/removes one casino's felt+brass token overrides. Everything else
   // in the design system reads these same five custom properties, so a new
   // "look" per stop is just five color values, not new CSS.
-  const ADV_PALETTE_VARS = { felt1:'--felt-1', felt2:'--felt-2', feltDeep:'--felt-deep', brass:'--brass', brassBright:'--brass-bright' };
+  const ADV_PALETTE_VARS = {
+    felt1:'--felt-1', felt2:'--felt-2', feltDeep:'--felt-deep',
+    brass:'--brass', brassBright:'--brass-bright',
+    panel:'--panel', panel2:'--panel-2'
+  };
   function applyPalette(stop){
     if(!stop.palette) return;
     Object.entries(ADV_PALETTE_VARS).forEach(([key, cssVar])=>{
